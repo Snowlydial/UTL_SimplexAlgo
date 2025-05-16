@@ -1,0 +1,16 @@
+# Ignore compiled class files
+*.class
+
+# Ignore build directories
+/bin/
+/build/
+/out/
+
+# IntelliJ
+/.idea/
+/*.iml
+
+# Eclipse
+/.classpath
+/.project
+/.settings/
