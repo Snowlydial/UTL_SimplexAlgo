@@ -86,7 +86,8 @@ public class SimplexSimple {
     }
 
     //*-------CORE:
-     public static int selectEnteringBasis(Fraction[][] tableau, boolean isMaximization, boolean isPhase1) {
+    // Pivolt column search
+    public static int selectEnteringBasis(Fraction[][] tableau, boolean isMaximization, boolean isPhase1) {
         int objectiveRow = tableau.length - 1;
         int enteringCol = -1;
 
@@ -110,6 +111,7 @@ public class SimplexSimple {
         return enteringCol;
     }
     
+    // Pivolt row search by doing ratio btw enterCol/RHS
     public static int selectLeavingBasis(Fraction[][] tableau, int enteringCol) {
         int leavingRow = -1;
         Fraction minRatio = new Fraction(Integer.MAX_VALUE);
@@ -228,23 +230,39 @@ public class SimplexSimple {
     }
 
     public static void printFinalSolution(Fraction[][] tableau, double[] originalObjective) {
-        int numCols = tableau[0].length - 1;
+        int numCols = tableau[0].length - 1;  // Exclude RHS column
+        int numRows = tableau.length - 1;     // Exclude objective row
         Fraction[] solution = new Fraction[numCols];
         Arrays.fill(solution, new Fraction(0));
 
-        for (int i = 0; i < tableau.length - 1; i++) {
-            for (int j = 0; j < numCols; j++) {
+        System.out.println("[============ Optimal Solution ============]");
+        
+        // Find basic variables (variables with value 1 in their column and 0 elsewhere)
+        for (int j = 0; j < numCols; j++) {
+            int pivotRow = -1;
+            boolean isBasic = true;
+            
+            for (int i = 0; i < numRows; i++) {
                 if (tableau[i][j].equals(new Fraction(1))) {
-                    solution[j] = tableau[i][numCols];
+                    if (pivotRow == -1) {
+                        pivotRow = i;  // Found the pivot row for this basic variable
+                    } else {
+                        isBasic = false;  // More than one 1 in the column
+                        break;
+                    }
+                } else if (!tableau[i][j].equals(new Fraction(0))) {
+                    isBasic = false;  // Non-zero value found
                     break;
                 }
             }
+            
+            if (isBasic && pivotRow != -1) {
+                solution[j] = tableau[pivotRow][numCols];  // RHS value
+                System.out.printf("x%d = %s\n", j+1, solution[j].toString());
+            }
         }
-
-        System.out.println("[============ Optimal Solution ============]");
-        for (int j = 0; j < originalObjective.length; j++) {
-            System.out.printf("x%d = %s\n", j+1, solution[j].toString());
-        }
-        System.out.printf("Objective Value: %s\n",  Math.abs(Integer.parseInt(tableau[tableau.length-1][numCols].toString())));
+        
+        System.out.printf("Objective Value: %s\n", 
+                        Math.abs(Integer.parseInt(tableau[tableau.length-1][numCols].toString())));
     }
 }

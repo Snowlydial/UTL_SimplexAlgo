@@ -50,7 +50,7 @@ public class SimplexTwoPhases extends SimplexSimple {
         printTableau(phaseOneTableau);
 
         // Step 4: Solve Phase 1
-        processSimple(phaseOneTableau, true, true, true);
+        processSimple(phaseOneTableau, true, true, false);
 
         // Check feasibility using fractions
         Fraction wValue = phaseOneTableau[phaseOneTableau.length - 1][phaseOneTableau[0].length - 1];
@@ -138,7 +138,7 @@ public class SimplexTwoPhases extends SimplexSimple {
         }
         // Negate W-row and zero artificials (since we maximize -W instead of minimizing W)
         for (int j = 0; j < wRow.length; j++) {
-            wRow[j] = wRow[j].multiply(new Fraction(-1));
+            // wRow[j] = wRow[j].multiply(new Fraction(-1));
             if (artificialVariableColumns.contains(j)) {
                 wRow[j] = new Fraction(0);
             }
