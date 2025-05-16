@@ -4,7 +4,7 @@ import java.util.Arrays;
 public class SimplexTwoPhases extends SimplexSimple {
     private int numArtificial = 0;
     private ArrayList<Integer> artificialVariableColumns = new ArrayList<>();
-    private double[] originalObjective; //Unused
+    private Fraction[] originalObjective;
 
     //?----------Constructor, Get and Set
     public SimplexTwoPhases() {
@@ -12,7 +12,10 @@ public class SimplexTwoPhases extends SimplexSimple {
 
     //*-------Setters
     public void setOriginalObjective(double[] objective) {
-        this.originalObjective = objective;
+        this.originalObjective = new Fraction[objective.length];
+        for (int i = 0; i < objective.length; i++) {
+            this.originalObjective[i] = new Fraction((int) objective[i], 1);
+        }
     }
     public void setNumArtificial(int _numArtificial) {
         this.numArtificial = _numArtificial;
@@ -22,7 +25,7 @@ public class SimplexTwoPhases extends SimplexSimple {
     public int getNumArtificial() {
         return this.numArtificial;
     }
-    public double[] getOriginalObjective() {
+    public Fraction[] getOriginalObjective() {
         return this.originalObjective;
     }
     public ArrayList<Integer> getIndexOfArtificialVariables() {
@@ -30,45 +33,43 @@ public class SimplexTwoPhases extends SimplexSimple {
     }
 
     //?---------MAIN METHODS
-    public double[][] phaseOneProcess(double[][] canonicalForm, double[] rhs, String[] constraints) {
-        //?----Step 1: Add artificial variables
-        double[][] standardizedWithArtificials = addArtificialVariables(canonicalForm, constraints);
-        double[][] standardizedWithRHS = fuseWithRightSide(standardizedWithArtificials, rhs);
-        
-        //?----Step 2: Create W row (sum of artificial rows)
-        double[] wRow = constructPhaseOneObjective(standardizedWithRHS);
+    public Fraction[][] phaseOneProcess(double[][] canonicalForm, double[] rhs, String[] constraints) {
+        // Step 1: Add artificial variables
+        Fraction[][] standardizedWithArtificials = addArtificialVariables(canonicalForm, constraints);
+        Fraction[][] standardizedWithRHS = fuseWithRightSide(standardizedWithArtificials, rhs);
 
-        //?----Step 3: Create Phase 1 tableau
-        double[][] phaseOneTableau = new double[standardizedWithRHS.length + 1][];
+        // Step 2: Create W-row
+        Fraction[] wRow = constructPhaseOneObjective(standardizedWithRHS);
+        
+        // Step 3: Build Phase 1 tableau
+        Fraction[][] phaseOneTableau = new Fraction[standardizedWithRHS.length + 1][];
         System.arraycopy(standardizedWithRHS, 0, phaseOneTableau, 0, standardizedWithRHS.length);
         phaseOneTableau[phaseOneTableau.length - 1] = wRow;
-        System.out.println("Initial tableau: ");
+
+        System.out.println("Initial Phase 1 Tableau:");
         printTableau(phaseOneTableau);
 
-        //?----Step 4: Solve Phase 1
+        // Step 4: Solve Phase 1
         processSimple(phaseOneTableau, true, true, true);
 
-        // Check if problem is feasible (W = 0)
-        double wValue = phaseOneTableau[phaseOneTableau.length - 1][phaseOneTableau[0].length - 1];
-        if (Math.abs(wValue) > 1e-6) {
-            throw new ArithmeticException("Problem is infeasible");
+        // Check feasibility using fractions
+        Fraction wValue = phaseOneTableau[phaseOneTableau.length - 1][phaseOneTableau[0].length - 1];
+        if (!wValue.isZero()) {
+            throw new ArithmeticException("Problem is infeasible (W = " + wValue + ")");
         }
 
-        // Remove artificial columns and W row
-        double[][] cleanedFromArtifAndObj = cleanPhase1Tableau(phaseOneTableau);
-
-        // System.out.println("Cleaned tableau: ");printTableau(cleanedFromArtifAndObj);
-        return cleanedFromArtifAndObj;
+        // Clean up artificial variables and W-row
+        return cleanPhase1Tableau(phaseOneTableau);
     }
 
-    public double[][] phaseTwoProcess(double[][] phaseOneCleaned) {
+    public Fraction[][] phaseTwoProcess(Fraction[][] phaseOneCleaned) {
         // Add original objective row
-        double[][] phaseTwoTableau = new double[phaseOneCleaned.length + 1][];
+        Fraction[][] phaseTwoTableau = new Fraction[phaseOneCleaned.length + 1][];
         System.arraycopy(phaseOneCleaned, 0, phaseTwoTableau, 0, phaseOneCleaned.length);
 
-        // Initialize objective row with original coefficients
-        double[] adjustedObjRow = new double[phaseOneCleaned[0].length];
-        Arrays.fill(adjustedObjRow, 0);
+        // Initialize objective row with original coefficients (now stored as Fraction[])
+        Fraction[] adjustedObjRow = new Fraction[phaseOneCleaned[0].length];
+        Arrays.fill(adjustedObjRow, new Fraction(0));
         for (int i = 0; i < originalObjective.length; i++) {
             adjustedObjRow[i] = originalObjective[i];
         }
@@ -82,134 +83,140 @@ public class SimplexTwoPhases extends SimplexSimple {
         System.out.println("Adjusted Phase 2 Tableau:");
         printTableau(phaseTwoTableau);
 
-        // Solve Phase 2
+        // Solve Phase 2 with fractions
         processSimple(phaseTwoTableau, true, false, false);
         return phaseTwoTableau;
     }
 
     //*---------CORE
-    public double[][] addArtificialVariables(double[][] canonicalForm, String[] constraints) {
-        // Standardize the problem (add slack/surplus variables) then add artif
-        double[][] stdForm = standardize(canonicalForm, constraints);
-    
+    private Fraction[][] addArtificialVariables(double[][] canonicalForm, String[] constraints) {
+        Fraction[][] stdForm = standardize(canonicalForm, constraints);
         int numArtificial = 0;
-        for (String constraint : constraints) {
-            if (constraint.equals("=") || constraint.equals(">=")) {
-                numArtificial++;
+        for (String c : constraints) if (c.equals(">=") || c.equals("=")) numArtificial++;
+        
+        Fraction[][] withArtificials = new Fraction[stdForm.length][stdForm[0].length + numArtificial];
+        
+        // Initialize all elements first
+        for (int i = 0; i < withArtificials.length; i++) {
+            for (int j = 0; j < withArtificials[i].length; j++) {
+                withArtificials[i][j] = new Fraction(0);  // Initialize to zero
             }
         }
-    
-        setNumArtificial(numArtificial);
-
-        int numRows = stdForm.length;
-        int numCols = stdForm[0].length + numArtificial;
-        double[][] withArtificials = new double[numRows][numCols];
-    
-        int nextArtificialCol = stdForm[0].length;    
-        for (int i = 0; i < numRows; i++) {
-            System.arraycopy(stdForm[i], 0, withArtificials[i], 0, stdForm[i].length);
+        
+        int nextArtCol = stdForm[0].length;
+        
+        for (int i = 0; i < stdForm.length; i++) {
+            // Copy existing values
+            for (int j = 0; j < stdForm[i].length; j++) {
+                withArtificials[i][j] = stdForm[i][j];
+            }
             
-            if (constraints[i].equals("=") || constraints[i].equals(">=")) {
-                withArtificials[i][nextArtificialCol] = 1;
-                artificialVariableColumns.add(nextArtificialCol);
-                nextArtificialCol++;
+            if (constraints[i].equals(">=") || constraints[i].equals("=")) {
+                withArtificials[i][nextArtCol] = new Fraction(1);
+                artificialVariableColumns.add(nextArtCol);
+                nextArtCol++;
             }
         }
-    
         return withArtificials;
     }
 
-    private double[] constructPhaseOneObjective(double[][] standardizedWithRHS) {
-        double[] wRow = new double[standardizedWithRHS[0].length];
+    private Fraction[] constructPhaseOneObjective(Fraction[][] standardizedWithRHS) {
+        Fraction[] wRow = new Fraction[standardizedWithRHS[0].length];
+        // Initialize wRow
+        for (int j = 0; j < wRow.length; j++) {
+            wRow[j] = new Fraction(0);
+        }
+
         for (int i = 0; i < standardizedWithRHS.length; i++) {
-            // Check if this row has an artificial variable
-            boolean isArtificialRow = isArtificialRow(standardizedWithRHS[i]);
-        
-            if (isArtificialRow) {
+            if (isArtificialRow(standardizedWithRHS[i])) {
                 for (int j = 0; j < wRow.length; j++) {
-                    wRow[j] += standardizedWithRHS[i][j];  // Sum all artificial rows
+                    if (standardizedWithRHS[i][j] != null) {
+                        wRow[j] = wRow[j].add(standardizedWithRHS[i][j]);
+                    }
                 }
             }
         }
-        // Negate the W-row (since we maximize -W instead of minimizing W)
+        // Negate W-row and zero artificials (since we maximize -W instead of minimizing W)
         for (int j = 0; j < wRow.length; j++) {
-            wRow[j] = -wRow[j];
-        }
-
-        // Set all artificial variables to 0 for the objective row
-        for (int col : artificialVariableColumns) {
-            wRow[col] = 0;
+            wRow[j] = wRow[j].multiply(new Fraction(-1));
+            if (artificialVariableColumns.contains(j)) {
+                wRow[j] = new Fraction(0);
+            }
         }
         return wRow;
     }
 
-    private void adjustObjectiveRow(double[][] tableau, double[] objectiveRow) {
-        int numRows = tableau.length - 1; // Exclude objective row
+    private void adjustObjectiveRow(Fraction[][] tableau, Fraction[] objectiveRow) {
+        int numRows = tableau.length - 1;
         int numCols = tableau[0].length;
 
         // For each basic variable, subtract its contribution from the objective row
         for (int i = 0; i < numRows; i++) {
             int basisCol = -1;
             // Find the basic variable in row i
-            for (int j = 0; j < numCols - 1; j++) { // Exclude RHS column
-                if (tableau[i][j] == 1.0) {
-                    boolean isBasic = true;
-                    for (int k = 0; k < numRows; k++) {
-                        if (k != i && Math.abs(tableau[k][j]) > 1e-6) {
-                            isBasic = false;
-                            break;
-                        }
-                    }
-                    if (isBasic) {
-                        basisCol = j;
+            for (int j = 0; j < numCols - 1; j++) {
+            if (tableau[i][j].equals(new Fraction(1))) {
+                boolean isBasic = true;
+                for (int k = 0; k < numRows; k++) {
+                    if (k != i && !tableau[k][j].isZero()) {
+                        isBasic = false;
                         break;
                     }
                 }
+                if (isBasic) {
+                    basisCol = j;
+                    break;
+                }
             }
-            if (basisCol == -1) continue;
-
-            // Get coefficient of the basic variable in the original objective
-            double coeff = (basisCol < originalObjective.length) ? originalObjective[basisCol] : 0;
-
-            // Subtract (coeff * row i) from the objective row
+        }
+        if (basisCol == -1) continue;
+    // Subtract basis variable's contribution from objective row
+            Fraction coeff = (basisCol < originalObjective.length) ? 
+                originalObjective[basisCol] : new Fraction(0);
             for (int j = 0; j < numCols; j++) {
-                objectiveRow[j] -= coeff * tableau[i][j];
+                Fraction product = coeff.multiply(tableau[i][j]);
+                objectiveRow[j] = objectiveRow[j].subtract(product);
             }
         }
     }
 
     //*---------UTILITY
-    private double[][] cleanPhase1Tableau(double[][] tableau) {
+    private Fraction[][] cleanPhase1Tableau(Fraction[][] tableau) {
         int newCols = tableau[0].length - artificialVariableColumns.size();
-        double[][] cleaned = new double[tableau.length - 1][newCols]; // Exclude W row
+        Fraction[][] cleaned = new Fraction[tableau.length - 1][newCols]; // Exclude W-row
 
         for (int i = 0; i < cleaned.length; i++) {
-            int newCol = 0;
-            for (int oldCol = 0; oldCol < tableau[i].length; oldCol++) {
-                if (!artificialVariableColumns.contains(oldCol)) {
-                    cleaned[i][newCol++] = tableau[i][oldCol];
+            int newColIdx = 0;
+            for (int oldColIdx = 0; oldColIdx < tableau[i].length; oldColIdx++) {
+                // Keep only non-artificial columns
+                if (!artificialVariableColumns.contains(oldColIdx)) {
+                    cleaned[i][newColIdx++] = tableau[i][oldColIdx];
                 }
             }
         }
         return cleaned;
     }
 
-    public double[][] fuseWithRightSide(double[][] matrix, double[] rightSide) {
-        int rows = matrix.length;
-        int cols = matrix[0].length + 1;
-        double[][] result = new double[rows][cols];
-
-        for (int i = 0; i < rows; i++) {
-            System.arraycopy(matrix[i], 0, result[i], 0, matrix[i].length);
-            result[i][cols - 1] = rightSide[i];
+    private Fraction[][] fuseWithRightSide(Fraction[][] matrix, double[] rhs) {
+        Fraction[][] result = new Fraction[matrix.length][];
+        for (int i = 0; i < matrix.length; i++) {
+            result[i] = new Fraction[matrix[i].length + 1];
+            for (int j = 0; j < matrix[i].length; j++) {
+                result[i][j] = matrix[i][j] != null ? matrix[i][j] : new Fraction(0);
+            }
+            result[i][matrix[i].length] = new Fraction((int) rhs[i], 1);
         }
-
         return result;
     }
 
-    private boolean isArtificialRow(double[] row) {
+    private boolean isArtificialRow(Fraction[] row) {
+        if (row == null) return false;
+        
+        Fraction one = new Fraction(1);
         for (int col : artificialVariableColumns) {
-            if (row[col] == 1.0) return true;
+            if (col < row.length && row[col] != null && row[col].equals(one)) {
+                return true;
+            }
         }
         return false;
     }

@@ -20,11 +20,11 @@ public class Main {
         };
 
         SimplexSimple spsp = new SimplexSimple();
-        double[][] standardized =spsp.standardize_then_fuse_rightSide(testArray, constraints, rightSide);
+        Fraction[][] standardized =spsp.standardize_then_fuse_rightSide(testArray, constraints, rightSide);
         System.out.println("Initial tableau:");
         SimplexSimple.printTableau(standardized);
         
-        double[][] afterProcess = spsp.processSimple(standardized, true, false, false);
+        Fraction[][] afterProcess = spsp.processSimple(standardized, true, false, false);
         SimplexSimple.printFinalSolution(afterProcess, OGobjectiveRow);
 
         //?--------- Test with two phase version
@@ -32,20 +32,22 @@ public class Main {
         double[][] twoPhaseArray = {
             {1, 1, 1},
             {2, 1, -1},
-            {0, -1, 1} 
+            {1, 0, 0},
+            {0, 1, 0},
+            {0, 0, 1} 
         };
-        double[] twoPhaseRHS = {40, 10, 10};
-        String[] twoPhaseConstraints = {"<=", ">=", ">="};
-        double[] originalObjective = {2, 3, 1};  // Max(2x + 3y + z)
+        double[] twoPhaseRHS = {10, 10, 0, 0, 0};
+        String[] twoPhaseConstraints = {"=", ">=", ">=", ">=", ">="};
+        double[] originalObjective = {4, 5};  // Max(2x + 3y + z)
 
         SimplexTwoPhases sptp = new SimplexTwoPhases();
         sptp.setOriginalObjective(originalObjective);
 
         System.out.println("[==================PHASE_1==================]");
-        double[][] afterPhase1 = sptp.phaseOneProcess(twoPhaseArray, twoPhaseRHS, twoPhaseConstraints);
+        Fraction[][] afterPhase1 = sptp.phaseOneProcess(twoPhaseArray, twoPhaseRHS, twoPhaseConstraints);
 
         System.out.println("[==================PHASE_2==================]");
-        double[][] afterPhase2 = sptp.phaseTwoProcess(afterPhase1);
+        Fraction[][] afterPhase2 = sptp.phaseTwoProcess(afterPhase1);
 
         SimplexSimple.printFinalSolution(afterPhase2, originalObjective);
     }
