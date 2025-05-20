@@ -47,7 +47,7 @@ public class SimplexTwoPhases extends SimplexSimple {
         phaseOneTableau[phaseOneTableau.length - 1] = wRow;
 
         System.out.println("Initial Phase 1 Tableau:");
-        printTableau(phaseOneTableau);
+        printTableau(phaseOneTableau, variableNames);
 
         // Step 4: Solve Phase 1
         processSimple(phaseOneTableau, true, true, false);
@@ -81,7 +81,7 @@ public class SimplexTwoPhases extends SimplexSimple {
         phaseTwoTableau[phaseTwoTableau.length - 1] = adjustedObjRow;
 
         System.out.println("Adjusted Phase 2 Tableau:");
-        printTableau(phaseTwoTableau);
+        printTableau(phaseTwoTableau, variableNames);
 
         // Solve Phase 2 with fractions
         processSimple(phaseTwoTableau, true, false, false);
@@ -116,6 +116,10 @@ public class SimplexTwoPhases extends SimplexSimple {
                 artificialVariableColumns.add(nextArtCol);
                 nextArtCol++;
             }
+        }
+
+        for(int i=0; i<numArtificial; i++) {
+            ((SimplexSimple) this).variableNames.add("a"+(artificialVariableColumns.size()+1));
         }
         return withArtificials;
     }

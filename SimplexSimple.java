@@ -1,4 +1,5 @@
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SimplexSimple {
     /* Supposons le probleme de maximisation suivant:
@@ -15,6 +16,8 @@ public class SimplexSimple {
     */
 
     private int numberOfSlackvars = 0;
+    private int numOriginalVars;
+    protected List<String> variableNames = new ArrayList<>();
 
     //?--------Constructors and Get/Set
     public SimplexSimple() {}
@@ -35,13 +38,21 @@ public class SimplexSimple {
         }
 
         int numRows = canonicalForm.length;
-        int numOriginalVars = canonicalForm[0].length;
+        numOriginalVars = canonicalForm[0].length;
         int numSlackVars = 0;
 
         for (String constraint : constraints) {
             if (!constraint.equals("=")) numSlackVars++;
         }
         setNumberOfSlackVar(numSlackVars);
+
+        variableNames.clear();
+        for(int i=0; i<numOriginalVars; i++) {
+            variableNames.add("x"+(i+1));
+        }
+        for(int i=0; i<numSlackVars; i++) {
+            variableNames.add("s"+(i+1));
+        }
 
         Fraction[][] standardLHS = new Fraction[numRows][numOriginalVars + numSlackVars];
         int slackVarIndex = 0;
@@ -174,7 +185,7 @@ public class SimplexSimple {
             executeSolvingProcess(tableau, isMaximization, isTwoPhases);
 
             System.out.println("----------Looping Processing----------");
-            printTableau(tableau);
+            printTableau(tableau, variableNames);
         }
         return tableau;
     }
@@ -218,52 +229,78 @@ public class SimplexSimple {
         return afterProcess[afterProcess.length - 1][afterProcess[0].length - 1];
     }
 
-    public static void printTableau(Fraction[][] tableau) {
-        for (int i = 0; i < tableau.length; i++) {
-            System.out.print("Row" + i + ": ");
-            for (int j = 0; j < tableau[i].length; j++) {
-                Fraction val = tableau[i][j];
-                System.out.printf("%12s", val != null ? val.toString() : "null");
+    public static void printTableau(Fraction[][] tableau, List<String> varNames) {
+        List<String> basis = new ArrayList<>();
+        
+        // Identify basis variables
+        for(int i=0; i<tableau.length-1; i++) {
+            for(int j=0; j<tableau[i].length-1; j++) {
+                if(tableau[i][j].equals(new Fraction(1))) {
+                    boolean isBasic = true;
+                    for(int k=0; k<tableau.length-1; k++) {
+                        if(k != i && !tableau[k][j].isZero()) {
+                            isBasic = false;
+                            break;
+                        }
+                    }
+                    if(isBasic) basis.add(varNames.get(j));
+                }
+            }
+        }
+
+        // Print tableau with improved absolute value formatting
+        for(int i=0; i<tableau.length; i++) {
+            String basisVar = (i < basis.size()) ? basis.get(i) : "OBJ";
+            System.out.printf("%-4s:", basisVar);
+            
+            for(int j=0; j<tableau[i].length; j++) {
+                Fraction currentFrac = tableau[i][j];
+                String valueStr = currentFrac.toString();
+                
+                if(i == tableau.length-1 && j == tableau[i].length-1) {
+                    int totalWidth = 10;
+                    System.out.printf("%"+totalWidth + "s" + "|" + "%s" + "|", "", valueStr, "");
+                } else {
+                    System.out.printf("%12s", valueStr);
+                }
             }
             System.out.println();
         }
     }
 
-    public static void printFinalSolution(Fraction[][] tableau, double[] originalObjective) {
-        int numCols = tableau[0].length - 1;  // Exclude RHS column
-        int numRows = tableau.length - 1;     // Exclude objective row
-        Fraction[] solution = new Fraction[numCols];
-        Arrays.fill(solution, new Fraction(0));
-
+    public static void printFinalSolution(Fraction[][] tableau, List<String> varNames) {
         System.out.println("[============ Optimal Solution ============]");
         
-        // Find basic variables (variables with value 1 in their column and 0 elsewhere)
-        for (int j = 0; j < numCols; j++) {
-            int pivotRow = -1;
-            boolean isBasic = true;
+        for(int j=0; j<varNames.size(); j++) {
+            boolean isBasic = false;
+            Fraction value = new Fraction(0);
             
-            for (int i = 0; i < numRows; i++) {
-                if (tableau[i][j].equals(new Fraction(1))) {
-                    if (pivotRow == -1) {
-                        pivotRow = i;  // Found the pivot row for this basic variable
-                    } else {
-                        isBasic = false;  // More than one 1 in the column
-                        break;
+            for(int i=0; i<tableau.length-1; i++) {
+                if(tableau[i][j].equals(new Fraction(1))) {
+                    boolean unique = true;
+                    for(int k=0; k<tableau.length-1; k++) {
+                        if(k != i && !tableau[k][j].isZero()) {
+                            unique = false;
+                            break;
+                        }
                     }
-                } else if (!tableau[i][j].equals(new Fraction(0))) {
-                    isBasic = false;  // Non-zero value found
-                    break;
+                    if(unique) {
+                        isBasic = true;
+                        value = tableau[i][tableau[i].length-1];
+                    }
                 }
             }
             
-            if (isBasic && pivotRow != -1) {
-                solution[j] = tableau[pivotRow][numCols];  // RHS value
-                System.out.printf("x%d = %s (%.4f)\n", j+1, solution[j].toString(), solution[j].toDouble());
+            if(isBasic) {
+                System.out.printf("%s = %s (%.2f)%n", varNames.get(j), value, value.toDouble());
             }
         }
         
-        Fraction objectiveValue = tableau[tableau.length-1][numCols];
-        System.out.printf("Objective Value: |%s| (%.4f)\n", 
-                        objectiveValue.toString(), Math.abs(objectiveValue.toDouble()));
+        Fraction objValue = tableau[tableau.length-1][tableau[0].length-1];
+        double objValueDouble = objValue.toDouble();
+        if(objValueDouble < 0) {
+            objValueDouble *= -1;
+        }
+        System.out.printf("Objective Value: |%s| (%.2f)%n", objValue.toString(), objValueDouble);
     }
 }
