@@ -258,11 +258,12 @@ public class SimplexSimple {
             
             if (isBasic && pivotRow != -1) {
                 solution[j] = tableau[pivotRow][numCols];  // RHS value
-                System.out.printf("x%d = %s\n", j+1, solution[j].toString());
+                System.out.printf("x%d = %s (%.4f)\n", j+1, solution[j].toString(), solution[j].toDouble());
             }
         }
         
-        System.out.printf("Objective Value: %s\n", 
-                        Math.abs(Integer.parseInt(tableau[tableau.length-1][numCols].toString())));
+        Fraction objectiveValue = tableau[tableau.length-1][numCols];
+        System.out.printf("Objective Value: |%s| (%.4f)\n", 
+                        objectiveValue.toString(), Math.abs(objectiveValue.toDouble()));
     }
 }
