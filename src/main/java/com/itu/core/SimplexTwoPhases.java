@@ -1,10 +1,18 @@
+package com.itu.core;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
+import com.itu.dto.SimplexStep;
 
 public class SimplexTwoPhases extends SimplexSimple {
     private int numArtificial = 0;
     private ArrayList<Integer> artificialVariableColumns = new ArrayList<>();
     private Fraction[] originalObjective;
+
+    private List<SimplexStep> phase1Steps = new ArrayList<>();
+    private List<SimplexStep> phase2Steps = new ArrayList<>();
 
     //?----------Constructor, Get and Set
     public SimplexTwoPhases() {
@@ -50,7 +58,8 @@ public class SimplexTwoPhases extends SimplexSimple {
         printTableau(phaseOneTableau, variableNames);
 
         // Step 4: Solve Phase 1
-        processSimple(phaseOneTableau, true, true, false);
+        phase1Steps.clear();
+        processSimple(phaseOneTableau, true, true, false, phase1Steps);
 
         // Check feasibility using fractions
         Fraction wValue = phaseOneTableau[phaseOneTableau.length - 1][phaseOneTableau[0].length - 1];
@@ -84,7 +93,8 @@ public class SimplexTwoPhases extends SimplexSimple {
         printTableau(phaseTwoTableau, variableNames);
 
         // Solve Phase 2 with fractions
-        processSimple(phaseTwoTableau, true, false, false);
+        phase2Steps.clear();
+        processSimple(phaseTwoTableau, true, false, false, phase2Steps);
         return phaseTwoTableau;
     }
 
@@ -223,5 +233,14 @@ public class SimplexTwoPhases extends SimplexSimple {
             }
         }
         return false;
+    }
+
+    //?---------New ADDITIONS:
+    public List<SimplexStep> getIterationStepsPhase1() {
+        return phase1Steps;
+    }
+
+    public List<SimplexStep> getIterationStepsPhase2() {
+        return phase2Steps;
     }
 }

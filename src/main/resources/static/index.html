@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simplex Solver</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Simplex Calculator</h1>
+        
+        <!-- Variable Input -->
+        <div class="input-section">
+            <label>Number of Variables: <input type="number" id="numVars"></label>
+            <button onclick="initProblem()">Start</button>
+        </div>
+
+        <div id="problem-form" style="display: none;">
+            <div class="objective">
+                <h3>Objective Function (Maximize)</h3>
+                <div id="objective-inputs"></div>
+            </div>
+
+            <div class="constraints">
+                <h3>Constraints</h3>
+                <div id="constraint-inputs"></div>
+                <button onclick="addConstraint()">Add Constraint</button>
+            </div>
+
+            <button onclick="solve()">Solve</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

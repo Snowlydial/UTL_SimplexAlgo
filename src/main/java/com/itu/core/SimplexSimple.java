@@ -1,31 +1,34 @@
+package com.itu.core;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class SimplexSimple {
-    /* Supposons le probleme de maximisation suivant:
-     * Max(12x + 16y)
-     * 10x + 20y <= 120
-     * 8x + 8y <= 80
-     * x,y >= 0
-     * 
-     * Ceci est la forme canonique, nous devons la mettre sous forme standard:
-     * Max(12x + 16y)
-     * 10x + 20y + s1 = 120
-     * 8x + 8y + s2 = 80
-     * x, y, s1, s2 >= 0
-    */
+import com.itu.dto.SimplexStep;
 
+public class SimplexSimple {
     private int numberOfSlackvars = 0;
     private int numOriginalVars;
     protected List<String> variableNames = new ArrayList<>();
 
-    //?--------Constructors and Get/Set
+    private List<SimplexStep> iterationSteps = new ArrayList<>();
+
+    //?--------Constructors
     public SimplexSimple() {}
 
+    //*---Getters
     public int getSlackVar() {
         return numberOfSlackvars;
     }
 
+    public List<String> getVariableNames() {
+        return variableNames;
+    }
+
+    public List<SimplexStep> getIterationSteps() {
+        return iterationSteps;
+    }
+
+    //*---Setters
     public void setNumberOfSlackVar(int nblack) {
         this.numberOfSlackvars = nblack;
     }
@@ -164,11 +167,13 @@ public class SimplexSimple {
         }
     }
 
-    public Fraction[][] processSimple(Fraction[][] tableau, boolean isMaximization, boolean isAuxiliaryProblem, boolean isTwoPhases) {
+    public Fraction[][] processSimple(Fraction[][] tableau, boolean isMaximization, boolean isAuxiliaryProblem, boolean isTwoPhases, List<SimplexStep> stepRecorder) {
         int maxIterations = 1000;
         int iterations = 0;
         
+        iterationSteps.clear(); // Reset steps for new calculation
         while (true) {
+            captureStep(tableau, stepRecorder);
             if (iterations++ > maxIterations) throw new ArithmeticException("Maximum iterations exceeded");
             
             // Check optimality using fraction comparisons
@@ -183,7 +188,6 @@ public class SimplexSimple {
             if(isTwoPhases && getFinalProcessValue(tableau).isZero()) break;
 
             executeSolvingProcess(tableau, isMaximization, isTwoPhases);
-
             System.out.println("----------Looping Processing----------");
             printTableau(tableau, variableNames);
         }
@@ -302,5 +306,56 @@ public class SimplexSimple {
             objValueDouble *= -1;
         }
         System.out.printf("Objective Value: |%s| (%.2f)%n", objValue.toString(), objValueDouble);
+    }
+
+    
+    //?------NEW HELPER METHODS
+    private void captureStep(Fraction[][] tableau, List<SimplexStep> stepRecorder) {
+        SimplexStep step = new SimplexStep();
+        step.setBasisVariables(getCurrentBasis(tableau));
+        step.setTableauRows(convertTableauToStringArray(tableau));
+        step.setObjectiveValue(getCurrentObjectiveValue(tableau));
+        stepRecorder.add(step);
+    }
+
+    private List<String> getCurrentBasis(Fraction[][] tableau) {
+        List<String> basis = new ArrayList<>();
+        for(int i=0; i<tableau.length-1; i++) {
+            for(int j=0; j<tableau[i].length-1; j++) {
+                if(tableau[i][j].equals(new Fraction(1))) {
+                    boolean isBasic = true;
+                    for(int k=0; k<tableau.length-1; k++) {
+                        if(k != i && !tableau[k][j].isZero()) {
+                            isBasic = false;
+                            break;
+                        }
+                    }
+                    if(isBasic) basis.add(variableNames.get(j));
+                }
+            }
+        }        
+        return basis;
+    }
+     
+    private List<List<String>> convertTableauToStringArray(Fraction[][] tableau) {
+        List<List<String>> rows = new ArrayList<>();
+        for(int i = 0; i< tableau.length; i++) {
+            List<String> stringRow = new ArrayList<>();
+            Fraction[] row = tableau[i];
+            for(int j=0; j< row.length; j++) {
+                String toAdd = row[j].toString();
+                if(i == tableau.length-1 && j == row.length-1) {
+                    toAdd = "| "+ toAdd + " |";
+                }
+                stringRow.add(toAdd);
+            }
+            rows.add(stringRow);
+        }
+        return rows;
+    }
+
+    private String getCurrentObjectiveValue(Fraction[][] tableau) {
+        Fraction objValue = tableau[tableau.length-1][tableau[0].length-1];
+        return String.format("|%s|", objValue.toString());
     }
 }
