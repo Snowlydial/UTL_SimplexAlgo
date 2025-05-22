@@ -104,39 +104,45 @@ public class SimplexSimple {
     public static int selectEnteringBasis(Fraction[][] tableau, boolean isMaximization, boolean isPhase1) {
         int objectiveRow = tableau.length - 1;
         int enteringCol = -1;
+        Fraction bestValue = new Fraction(0);
 
-        if (isPhase1) {
-            Fraction mostNegative = new Fraction(Integer.MAX_VALUE);
+        if (isPhase1) { //Find most negative coefficient
+            bestValue = new Fraction(1); // Start with positive value
             for (int j = 0; j < tableau[0].length - 1; j++) {
-                if (tableau[objectiveRow][j].compareTo(mostNegative) < 0) {
-                    mostNegative = tableau[objectiveRow][j];
+                Fraction current = tableau[objectiveRow][j];
+                if (current.compareTo(bestValue) < 0) {
+                    bestValue = current;
                     enteringCol = j;
                 }
             }
-        } else if (isMaximization) {
-            Fraction mostPositive = new Fraction(Integer.MIN_VALUE);
+        } else if (isMaximization) { // Find most positive coefficient
+            bestValue = new Fraction(-1); // Start with negative value
             for (int j = 0; j < tableau[0].length - 1; j++) {
-                if (tableau[objectiveRow][j].compareTo(mostPositive) > 0) {
-                    mostPositive = tableau[objectiveRow][j];
+                Fraction current = tableau[objectiveRow][j];
+                if (current.compareTo(bestValue) > 0) {
+                    bestValue = current;
                     enteringCol = j;
                 }
             }
         }
+        
         return enteringCol;
     }
     
     // Pivolt row search by doing ratio btw enterCol/RHS
     public static int selectLeavingBasis(Fraction[][] tableau, int enteringCol) {
+        Fraction minRatio = null;
         int leavingRow = -1;
-        Fraction minRatio = new Fraction(Integer.MAX_VALUE);
 
         for (int i = 0; i < tableau.length - 1; i++) {
-            if (tableau[i][enteringCol].compareTo(new Fraction(0)) > 0) {
-                Fraction ratio = tableau[i][tableau[i].length - 1].divide(tableau[i][enteringCol]);
-                if (ratio.compareTo(minRatio) < 0) {
-                    minRatio = ratio;
-                    leavingRow = i;
-                }
+            Fraction denominator = tableau[i][enteringCol];
+            if (denominator.compareTo(new Fraction(0)) <= 0) continue;  // Only consider positive denominators
+
+            Fraction numerator = tableau[i][tableau[i].length - 1];
+            Fraction ratio = numerator.divide(denominator);
+            if (minRatio == null || ratio.compareTo(minRatio) < 0) {
+                minRatio = ratio;
+                leavingRow = i;
             }
         }
         return leavingRow;
