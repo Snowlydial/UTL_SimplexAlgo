@@ -23,7 +23,7 @@ public class Fraction {
         return b == 0 ? a : gcd(b, a % b);
     }
 
-    // ================ ARITHMETIC OPERATIONS ================
+    //* ================ ARITHMETIC OPERATIONS ================
     public Fraction add(Fraction other) {
         int newDenominator = this.denominator * other.denominator;
         int newNumerator = this.numerator * other.denominator + other.numerator * this.denominator;
@@ -45,7 +45,7 @@ public class Fraction {
         return this.multiply(new Fraction(other.denominator, other.numerator));
     }
 
-    // ================ COMPARISON OPERATIONS ================
+    //* ================ COMPARISON OPERATIONS ================
     public int compareTo(Fraction other) {
         int crossProduct1 = this.numerator * other.denominator;
         int crossProduct2 = other.numerator * this.denominator;
@@ -65,7 +65,7 @@ public class Fraction {
         return numerator > 0;
     }
 
-    // ================ UTILITY METHODS ================
+    //* ================ UTILITY METHODS ================
     @Override
     public String toString() {
         if (denominator == 1) return String.valueOf(numerator);
@@ -74,6 +74,15 @@ public class Fraction {
 
     public double toDouble() {
         return (double) numerator / denominator;
+    }
+
+    public boolean isInteger() {
+        return (getDenominator() == 1);
+    }
+
+    public Fraction floor() {
+        double dValue = this.toDouble();
+        return new Fraction((int)Math.floor(dValue));
     }
 
     // Getters (optional)
