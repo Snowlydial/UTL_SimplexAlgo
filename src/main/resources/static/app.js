@@ -84,13 +84,14 @@ async function solve() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(requestBody)
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+
         //*---Fetch response from the URL
         const result = await response.json();
+        
+        if (!response.ok) {
+            const serverMessage = result.error || 'No additional error information';
+            throw new Error(`HTTP ${response.status} - Server Message: ${serverMessage}`);
+        }
         
         if (result.error) {
             displayError(result.error);

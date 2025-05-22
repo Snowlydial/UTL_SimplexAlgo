@@ -30,17 +30,23 @@ public class SimplexController {
 
     //?-----Simple related method:
     private ResponseEntity<Map<String, Object>> solveSimple(SimplexRequest request) {
-        SimplexSimple spsp = new SimplexSimple();
-        
-        Fraction[][] standardized = spsp.standardize_then_fuse_rightSide(
-            request.getConstraintsWithObjective(),
-            request.getConstraintTypesWithObjectiveDummy(),
-            request.getRhsWithObjectiveDummy()
-        );
-        
-        Fraction[][] solution = spsp.processSimple(standardized, true, false, false, spsp.getIterationSteps());
-        
-        return buildResponse(solution, spsp);
+        try {
+            SimplexSimple spsp = new SimplexSimple();
+            
+            Fraction[][] standardized = spsp.standardize_then_fuse_rightSide(
+                request.getConstraintsWithObjective(),
+                request.getConstraintTypesWithObjectiveDummy(),
+                request.getRhsWithObjectiveDummy()
+            );
+            
+            Fraction[][] solution = spsp.processSimple(standardized, true, false, false, spsp.getIterationSteps());
+            
+            return buildResponse(solution, spsp);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new LinkedHashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
     //?-----Two-phase related methods:
