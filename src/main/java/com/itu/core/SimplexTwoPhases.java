@@ -64,7 +64,7 @@ public class SimplexTwoPhases extends SimplexSimple {
         // Check feasibility using fractions
         Fraction wValue = phaseOneTableau[phaseOneTableau.length - 1][phaseOneTableau[0].length - 1];
         if (!wValue.isZero()) {
-            throw new ArithmeticException("Problem is infeasible (W = " + wValue + ")");
+            throw new ArithmeticException("Problem unsolvable. P1 ended with W(" + wValue + ")≠0");
         }
 
         // Clean up artificial variables and W-row
