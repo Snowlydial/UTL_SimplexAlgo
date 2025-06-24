@@ -149,3 +149,119 @@ button:hover {
     position: relative;
     padding-right: 40px !important;
 }
+
+/* Branch and Bound section*/
+.integer-programming-option {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f0fcff;
+    border-left: 4px solid #289CB8;
+    border-radius: 4px;
+}
+
+.integer-programming-option label {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    color: #289CB8;
+}
+
+.integer-programming-option input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+}
+
+.integer-programming-option small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Styling for Branch and Bound results */
+.branch-bound-container {
+    margin: 20px 0;
+    border: 2px solid #ffbe39;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #f8fff8;
+}
+
+.branching-steps {
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    background-color: white;
+}
+
+.branching-step {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #3b3b47;
+}
+
+.branching-step h4 {
+    color: #ffbe39;
+    margin-top: 0;
+    border-bottom: 1px solid #ffbe39;
+    padding-bottom: 5px;
+}
+
+.step-info {
+    margin-top: 10px;
+}
+
+.step-info p {
+    margin: 10px 5px;
+}
+
+.integer-solution {
+    color: #3b3b47;
+    background-color: #f0fcff;
+    border-left: 4px solid #289CB8;
+}
+
+.pruned {
+    color: #3b3b47;
+    background-color: #e6e1d1;
+    border-left: 4px solid #ffbe39;
+}
+
+.infeasible {
+    color: #3b3b47;
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+}
+
+.branch-bounds {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #2a2c39;;
+    border-radius: 4px;
+}
+
+.integer-variables ul {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.step-message {
+    font-style: italic;
+    color: #919494;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dotted #b7b8ba;
+}
+
+.solution-type {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #155724;
+}
