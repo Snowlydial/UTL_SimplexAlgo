@@ -5,6 +5,31 @@ import java.util.*;
 import com.itu.dto.BranchAndBoundStep;
 
 public class SimplexBranchAndBound {
+    private class BranchNode {
+        double[][] constraints;
+        double[] rhs;
+        String[] constraintTypes;
+        double[] objective;
+        List<String> branchingConstraints;
+        
+        Map<String, Double> solution;
+        double upperBound;
+        boolean feasible;
+        int nodeId;
+        
+        public BranchNode(double[][] constraints, double[] rhs, String[] constraintTypes,
+                         List<String> branchingConstraints, double[] objective) {
+            this.constraints = constraints;
+            this.rhs = rhs;
+            this.constraintTypes = constraintTypes;
+            this.branchingConstraints = branchingConstraints;
+            this.objective = objective;
+            this.nodeId = ++nodeCounter;
+            this.feasible = true;
+            this.upperBound = Double.NEGATIVE_INFINITY;
+        }
+    }
+
     private SimplexSimple simplexSolver;
     private SimplexTwoPhases twoPhasesSolver;
     private boolean needsTwoPhase;
@@ -330,7 +355,7 @@ public class SimplexBranchAndBound {
         return result;
     }
     
-    // Helper methods for simple method
+    //?========Helper Functions
     private double[][] combineConstraintsWithObjective(double[][] constraints, double[] objective) {
         double[][] result = new double[constraints.length + 1][];
         System.arraycopy(constraints, 0, result, 0, constraints.length);
@@ -354,31 +379,5 @@ public class SimplexBranchAndBound {
     
     public List<BranchAndBoundStep> getBranchingSteps() {
         return branchingSteps;
-    }
-    
-    // Inner class for branch nodes
-    private class BranchNode {
-        double[][] constraints;
-        double[] rhs;
-        String[] constraintTypes;
-        double[] objective;
-        List<String> branchingConstraints;
-        
-        Map<String, Double> solution;
-        double upperBound;
-        boolean feasible;
-        int nodeId;
-        
-        public BranchNode(double[][] constraints, double[] rhs, String[] constraintTypes,
-                         List<String> branchingConstraints, double[] objective) {
-            this.constraints = constraints;
-            this.rhs = rhs;
-            this.constraintTypes = constraintTypes;
-            this.branchingConstraints = branchingConstraints;
-            this.objective = objective;
-            this.nodeId = ++nodeCounter;
-            this.feasible = true;
-            this.upperBound = Double.NEGATIVE_INFINITY;
-        }
     }
 }
