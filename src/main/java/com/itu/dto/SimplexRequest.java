@@ -5,7 +5,8 @@ public class SimplexRequest {
     private double[] objective; // the stuff to maximize
     private double[][] constraints; // the matrix
     private double[] rhs;
-    private String[] constraintTypes; // the sings
+    private String[] constraintTypes; // the signs
+    private boolean integerProgramming; // NEW: flag to indicate if this is an integer programming problem
 
     //?-------All getters
     public double[] getObjective() {
@@ -19,6 +20,9 @@ public class SimplexRequest {
     }
     public String[] getConstraintTypes() {
         return constraintTypes;
+    }
+    public boolean isIntegerProgramming() {
+        return integerProgramming;
     }
 
     //?---------USE THESE ONLY FOR THE SIMPLE version
@@ -74,5 +78,8 @@ public class SimplexRequest {
     }
     public void setConstraintTypes(String[] constraintTypes) {
         this.constraintTypes = constraintTypes;
+    }
+    public void setIntegerProgramming(boolean integerProgramming) {
+        this.integerProgramming = integerProgramming;
     }
 }

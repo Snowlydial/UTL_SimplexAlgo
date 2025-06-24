@@ -11,13 +11,19 @@ import java.util.Map;
 import com.itu.core.*;
 import com.itu.dto.SimplexRequest;
 
-@RestController // combines @Controller and @ResponseBody, this class handles HTTP requests and returns JSON responses
-@RequestMapping("/api/simplex") // every redirection to /api/simplex/something goes here
-@CrossOrigin // allows the frontend (from a different port) to access this API
+@RestController
+@RequestMapping("/api/simplex")
+@CrossOrigin
 public class SimplexController {
 
-    @PostMapping("/solve") // every page redirecting to /api/simplex/solve call this function
+    @PostMapping("/solve")
     public ResponseEntity<Map<String, Object>> solve(@RequestBody SimplexRequest request) {
+        // Check if this is an integer programming problem
+        if (request.isIntegerProgramming()) {
+            return solveBranchAndBound(request);
+        }
+        
+        // Regular LP solving
         boolean needsTwoPhase = Arrays
             .stream(request.getConstraintTypes())
             .anyMatch(c -> c.equals(">=") || c.equals("="));
@@ -25,6 +31,30 @@ public class SimplexController {
             return solveTwoPhase(request);
         } else {
             return solveSimple(request);
+        }
+    }
+
+    //?-----Branch and Bound method:
+    private ResponseEntity<Map<String, Object>> solveBranchAndBound(SimplexRequest request) {
+        try {
+            SimplexBranchAndBound bnbSolver = new SimplexBranchAndBound();
+            
+            Map<String, Object> result = bnbSolver.solve(
+                request.getObjective(),
+                request.getConstraints(),
+                request.getRhs(),
+                request.getConstraintTypes()
+            );
+            
+            if (result.containsKey("error")) {
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new LinkedHashMap<>();
+            errorResponse.put("error", "Branch-and-Bound failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 

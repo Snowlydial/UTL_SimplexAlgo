@@ -69,12 +69,18 @@ async function solve() {
         })
     ;
 
+    //*---Check if integer programming is selected
+    const isIntegerProgramming = document.getElementById('integer-programming') ? 
+        document.getElementById('integer-programming').checked : false;
+        console.log(`Value of IntegerProgramming: ${isIntegerProgramming}`);
+
     //*---Prepare request to JSON-ify and send to URL for a response
     const requestBody = {
         objective: objective,
         constraints: constraints.map(c => c.coefficients),
         rhs: constraints.map(c => c.rhs),
-        constraintTypes: constraints.map(c => c.type)
+        constraintTypes: constraints.map(c => c.type),
+        integerProgramming: isIntegerProgramming
     };
 
     try {
@@ -96,8 +102,12 @@ async function solve() {
         if (result.error) {
             displayError(result.error);
         } else {
-            //*---Display the tableau and the final solution
-            displayResults(result);
+            //*---Display the results based on solution type
+            if (result.branchingSteps) {
+                displayBranchAndBoundResults(result);
+            } else {
+                displayResults(result);
+            }
         }
     } catch (error) {
         displayError(error.message);
@@ -188,3 +198,122 @@ function buildStepHtml(step, iterationNumber) {
         callback(currentItem, i, phase1Steps);
     }
 */
+
+//?======= BRANCH AND BOUNF STUFF
+function displayBranchAndBoundResults(result) {
+    const resultsDiv = document.getElementById('results');
+    let html = '<div class="solution-container">';
+    
+    //*---Case with no solution
+    if (!result.variables || Object.keys(result.variables).length === 0) {
+        html += '<p class="error">No integer solution found. Problem may be infeasible or unbounded.</p>';
+        resultsDiv.innerHTML = html;
+        return;
+    }
+
+    //*---Display Branch and Bound steps
+    html += '<h2>Branch and Bound Solution Process</h2>';
+    html += '<div class="branch-bound-container">';
+    
+    if (result.branchingSteps && result.branchingSteps.length > 0) {
+        html += '<h3>Branching Steps:</h3>';
+        html += '<div class="branching-steps">';
+        
+        result.branchingSteps.forEach((step, index) => {
+            html += buildBranchingStepHtml(step, index + 1);
+        });
+        
+        html += '</div>';
+    }
+    
+    html += '</div>';
+
+    //*---Display final integer solution
+    html += '<h2>Final Integer Solution</h2><ul class="variables-list">';
+    for (const [variable, value] of Object.entries(result.variables)) {
+        // Only show original variables (x1, x2, etc.)
+        if (variable.startsWith('x') && /^x\d+$/.test(variable)) {
+            html += `
+                <li>
+                    <span class="variable-name">${variable}</span> = ${Math.round(value)}
+                </li>
+            `;
+        }
+    }
+    html += `</ul>
+        <div class="objective-value">
+            | Integer Objective Value | = ${result.objective.toFixed(4)}
+        </div>
+        <div class="solution-type">
+            Solution Type: ${result.solutionType || 'INTEGER_OPTIMAL'}
+        </div>`;
+    
+    html += '</div>';
+    resultsDiv.innerHTML = html;
+}
+
+//*--------Build HTML for branching steps
+function buildBranchingStepHtml(step, stepNumber) {
+    let html = `<div class="branching-step">`;
+    
+    if (step.nodeType === 'BRANCHING') {
+        html += `
+            <h4>Step ${stepNumber} - Node ${step.nodeId}</h4>
+            <div class="step-info">
+                <p><strong>Type:</strong> Branching Node</p>
+                <p><strong>Current Objective:</strong> ${(step.objectiveValue || 0).toFixed(4)}</p>
+                <p><strong>Branching Variable:</strong> ${step.branchVariable || 'N/A'} = ${(step.branchValue || 0).toFixed(4)}</p>
+                <div class="branch-bounds">
+                    <p>Left Child (${step.branchVariable || 'N/A'} ≤ ${Math.floor(step.branchValue || 0)}): ${(step.leftChildBound || 0).toFixed(4)}</p>
+                    <p>Right Child (${step.branchVariable || 'N/A'} ≥ ${Math.floor(step.branchValue || 0) + 1}): ${(step.rightChildBound || 0).toFixed(4)}</p>
+                </div>
+                <p class="step-message">${step.message || 'No message'}</p>
+            </div>
+        `;
+    } else if (step.nodeType === 'INTEGER_SOLUTION') {
+        html += `
+            <h4>Step ${stepNumber} - Node ${step.nodeId}</h4>
+            <div class="step-info integer-solution">
+                <p><strong>Type:</strong> Integer Solution Found!</p>
+                <p><strong>Objective Value:</strong> ${(step.objectiveValue || 0).toFixed(4)}</p>
+                <div class="integer-variables">
+                    <p><strong>Integer Variables:</strong></p>
+                    <ul>
+        `;
+        
+        if (step.solution) {
+            for (const [variable, value] of Object.entries(step.solution)) {
+                if (variable.startsWith('x') && /^x\d+$/.test(variable)) {
+                    html += `<li>${variable} = ${Math.round(value || 0)}</li>`;
+                }
+            }
+        }
+        
+        html += `
+                    </ul>
+                </div>
+                <p class="step-message">${step.message || 'No message'}</p>
+            </div>
+        `;
+    } else if (step.nodeType === 'PRUNED') {
+        html += `
+            <h4>Step ${stepNumber} - Node ${step.nodeId}</h4>
+            <div class="step-info pruned">
+                <p><strong>Type:</strong> Pruned Node</p>
+                <p><strong>Reason:</strong> Upper bound (${(step.objectiveValue || 0).toFixed(4)}) ≤ Best integer solution</p>
+                <p class="step-message">${step.message || 'No message'}</p>
+            </div>
+        `;
+    } else if (step.nodeType === 'INFEASIBLE') {
+        html += `
+            <h4>Step ${stepNumber} - Node ${step.nodeId}</h4>
+            <div class="step-info infeasible">
+                <p><strong>Type:</strong> Infeasible Node</p>
+                <p class="step-message">${step.message || 'No message'}</p>
+            </div>
+        `;
+    }
+    
+    html += `</div>`;
+    return html;
+}
