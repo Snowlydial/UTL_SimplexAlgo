@@ -41,6 +41,7 @@ public class SimplexBranchAndBound {
     private List<BranchAndBoundStep> branchingSteps;
     private int nodeCounter;
     
+    //?----Constructors
     public SimplexBranchAndBound() {
         this.simplexSolver = new SimplexSimple();
         this.twoPhasesSolver = new SimplexTwoPhases();
@@ -51,6 +52,7 @@ public class SimplexBranchAndBound {
         this.nodeCounter = 0;
     }
     
+    //?----Functions
     public Map<String, Object> solve(double[] objective, double[][] constraints, 
                                    double[] rhs, String[] constraintTypes) {
         // Check if two-phase method is needed
@@ -221,7 +223,7 @@ public class SimplexBranchAndBound {
     }
     
     private BranchNode createChildNode(BranchNode parent, String variable, String operator, int value) {
-        // Copy parent constraints
+        //*--Copy parent constraints
         List<double[]> constraintsList = new ArrayList<>();
         for (double[] constraint : parent.constraints) {
             constraintsList.add(constraint.clone());
@@ -237,11 +239,11 @@ public class SimplexBranchAndBound {
             constraintTypesList.add(type);
         }
         
-        // Add new branching constraint
+        //*--Add new branching constraint
         double[] newConstraint = new double[parent.objective.length];
         Arrays.fill(newConstraint, 0.0);
         
-        // Find variable index
+        //*--Find variable index
         int varIndex = -1;
         for (int i = 0; i < parent.objective.length; i++) {
             if (variable.equals("x" + (i + 1))) {
@@ -257,7 +259,7 @@ public class SimplexBranchAndBound {
             constraintTypesList.add(operator);
         }
         
-        // Create child node
+        //*--Create child node
         BranchNode child = new BranchNode(
             constraintsList.toArray(new double[0][]),
             rhsList.stream().mapToDouble(Double::doubleValue).toArray(),
