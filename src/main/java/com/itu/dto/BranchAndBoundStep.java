@@ -1,5 +1,6 @@
 package com.itu.dto;
 
+import java.util.List;
 import java.util.Map;
 
 public class BranchAndBoundStep {
@@ -12,11 +13,13 @@ public class BranchAndBoundStep {
     private double rightChildBound;
     private Map<String, Double> solution;
     private String message;
+    private List<String> branchPath; // NEW: Track the path to this solution
+    private int parentNodeId; // NEW: Track parent node
 
-    // Constructors
+    //?=====Constructors
     public BranchAndBoundStep() {}
 
-    // Getters
+    //?=====Getters
     public int getNodeId() {
         return nodeId;
     }
@@ -53,7 +56,15 @@ public class BranchAndBoundStep {
         return message;
     }
 
-    // Setters
+    public List<String> getBranchPath() {
+        return branchPath;
+    }
+
+    public int getParentNodeId() {
+        return parentNodeId;
+    }
+
+    //?=====Setters
     public void setNodeId(int nodeId) {
         this.nodeId = nodeId;
     }
@@ -88,5 +99,13 @@ public class BranchAndBoundStep {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public void setBranchPath(List<String> branchPath) {
+        this.branchPath = branchPath;
+    }
+
+    public void setParentNodeId(int parentNodeId) {
+        this.parentNodeId = parentNodeId;
     }
 }

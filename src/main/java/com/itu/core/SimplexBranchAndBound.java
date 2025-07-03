@@ -11,11 +11,13 @@ public class SimplexBranchAndBound {
         String[] constraintTypes;
         double[] objective;
         List<String> branchingConstraints;
+        List<String> branchPath; // NEW: Track path from root to this node
         
         Map<String, Double> solution;
         double upperBound;
         boolean feasible;
         int nodeId;
+        int parentNodeId; // NEW: Track parent
         
         public BranchNode(double[][] constraints, double[] rhs, String[] constraintTypes,
                          List<String> branchingConstraints, double[] objective) {
@@ -27,6 +29,17 @@ public class SimplexBranchAndBound {
             this.nodeId = ++nodeCounter;
             this.feasible = true;
             this.upperBound = Double.NEGATIVE_INFINITY;
+            this.branchPath = new ArrayList<>(); // Initialize empty path
+            this.parentNodeId = -1; // Root has no parent
+        }
+
+        // Constructor for child nodes
+        public BranchNode(double[][] constraints, double[] rhs, String[] constraintTypes,
+                        List<String> branchingConstraints, double[] objective, 
+                        List<String> parentPath, int parentId) {
+            this(constraints, rhs, constraintTypes, branchingConstraints, objective);
+            this.branchPath = new ArrayList<>(parentPath); // Copy parent's path
+            this.parentNodeId = parentId;
         }
     }
 
@@ -92,13 +105,24 @@ public class SimplexBranchAndBound {
                     bestIntegerSolution = new HashMap<>(currentNode.solution);
                     foundIntegerSolution = true;
                     
-                    // Record this as a solution step
+                    // Record this as a solution step WITH PATH TRACKING
                     BranchAndBoundStep step = new BranchAndBoundStep();
                     step.setNodeId(currentNode.nodeId);
                     step.setNodeType("INTEGER_SOLUTION");
                     step.setObjectiveValue(objectiveValue);
                     step.setSolution(new HashMap<>(currentNode.solution));
-                    step.setMessage("Found integer solution with objective value: " + objectiveValue);
+                    step.setBranchPath(new ArrayList<>(currentNode.branchPath)); // NEW: Add path
+                    step.setParentNodeId(currentNode.parentNodeId); // NEW: Add parent
+                    
+                    // Create detailed message with path
+                    StringBuilder pathMessage = new StringBuilder();
+                    pathMessage.append("Found integer solution with objective value: ").append(objectiveValue);
+                    if (!currentNode.branchPath.isEmpty()) {
+                        pathMessage.append("\nBranch Path: ");
+                        pathMessage.append(String.join(" → ", currentNode.branchPath));
+                    }
+                    step.setMessage(pathMessage.toString());
+                    
                     branchingSteps.add(step);
                 }
                 continue;
@@ -265,10 +289,14 @@ public class SimplexBranchAndBound {
             rhsList.stream().mapToDouble(Double::doubleValue).toArray(),
             constraintTypesList.toArray(new String[0]),
             new ArrayList<>(parent.branchingConstraints),
-            parent.objective.clone()
+            parent.objective.clone(),
+            parent.branchPath, // Pass parent's path
+            parent.nodeId // Pass parent's ID
         );
         
-        child.branchingConstraints.add(variable + " " + operator + " " + value);
+        String branchDecision = variable + " " + operator + " " + value;
+        child.branchingConstraints.add(branchDecision);
+        child.branchPath.add(branchDecision); // Add to path
         
         return child;
     }

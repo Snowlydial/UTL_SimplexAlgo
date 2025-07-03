@@ -264,18 +264,36 @@ function buildBranchingStepHtml(step, stepNumber) {
                 <p><strong>Current Objective:</strong> ${(step.objectiveValue || 0).toFixed(4)}</p>
                 <p><strong>Branching Variable:</strong> ${step.branchVariable || 'N/A'} = ${(step.branchValue || 0).toFixed(4)}</p>
                 <div class="branch-bounds">
-                    <p>Left Child (${step.branchVariable || 'N/A'} ≤ ${Math.floor(step.branchValue || 0)}): ${(step.leftChildBound || 0).toFixed(4)}</p>
-                    <p>Right Child (${step.branchVariable || 'N/A'} ≥ ${Math.floor(step.branchValue || 0) + 1}): ${(step.rightChildBound || 0).toFixed(4)}</p>
+                    <p>Left Child (${step.branchVariable || 'N/A'} ≤ ${Math.floor(step.branchValue || 0)}): 
+                       ${formatBound(step.leftChildBound)}</p>
+                    <p>Right Child (${step.branchVariable || 'N/A'} ≥ ${Math.floor(step.branchValue || 0) + 1}): 
+                       ${formatBound(step.rightChildBound)}</p>
                 </div>
                 <p class="step-message">${step.message || 'No message'}</p>
             </div>
         `;
     } else if (step.nodeType === 'INTEGER_SOLUTION') {
         html += `
-            <h4>Step ${stepNumber} - Node ${step.nodeId}</h4>
+            <h4> Step ${stepNumber} - Node ${step.nodeId} - INTEGER SOLUTION FOUND!</h4>
             <div class="step-info integer-solution">
                 <p><strong>Type:</strong> Integer Solution Found!</p>
                 <p><strong>Objective Value:</strong> ${(step.objectiveValue || 0).toFixed(4)}</p>
+                
+                <!-- NEW: Display branch path -->
+                ${step.branchPath && step.branchPath.length > 0 ? `
+                <div class="branch-path">
+                    <p><strong> Branch Path to Solution:</strong></p>
+                    <div class="path-visualization">
+                        <span class="path-root">Root</span>
+                        ${step.branchPath.map(pathStep => 
+                            `<span class="path-arrow">→</span><span class="path-step">${pathStep}</span>`
+                        ).join('')}
+                        <span class="path-arrow">→</span><span class="path-solution">✅ INTEGER SOLUTION</span>
+                    </div>
+                    <p class="path-text"><strong>Path:</strong> ${step.branchPath.join(' → ')}</p>
+                </div>
+                ` : '<p><strong>Path:</strong> Found at root (no branching needed)</p>'}
+                
                 <div class="integer-variables">
                     <p><strong>Integer Variables:</strong></p>
                     <ul>
@@ -309,6 +327,7 @@ function buildBranchingStepHtml(step, stepNumber) {
             <h4>Step ${stepNumber} - Node ${step.nodeId}</h4>
             <div class="step-info infeasible">
                 <p><strong>Type:</strong> Infeasible Node</p>
+                <p><strong>Reason:</strong> Branching constraints created an impossible/contradictory system</p>
                 <p class="step-message">${step.message || 'No message'}</p>
             </div>
         `;
@@ -316,4 +335,15 @@ function buildBranchingStepHtml(step, stepNumber) {
     
     html += `</div>`;
     return html;
+}
+
+// Helper function to format bounds (handles -999999 case)
+function formatBound(bound) {
+    if (bound === undefined || bound === null) {
+        return "N/A";
+    }
+    if (bound <= -999999 || bound === Number.NEGATIVE_INFINITY) {
+        return "INFEASIBLE ";
+    }
+    return bound.toFixed(4);
 }
