@@ -11,13 +11,13 @@ public class SimplexBranchAndBound {
         String[] constraintTypes;
         double[] objective;
         List<String> branchingConstraints;
-        List<String> branchPath; // NEW: Track path from root to this node
+        List<String> branchPath; // Track path from root to this node
         
         Map<String, Double> solution;
         double upperBound;
         boolean feasible;
         int nodeId;
-        int parentNodeId; // NEW: Track parent
+        int parentNodeId;
         
         public BranchNode(double[][] constraints, double[] rhs, String[] constraintTypes,
                          List<String> branchingConstraints, double[] objective) {
@@ -111,8 +111,8 @@ public class SimplexBranchAndBound {
                     step.setNodeType("INTEGER_SOLUTION");
                     step.setObjectiveValue(objectiveValue);
                     step.setSolution(new HashMap<>(currentNode.solution));
-                    step.setBranchPath(new ArrayList<>(currentNode.branchPath)); // NEW: Add path
-                    step.setParentNodeId(currentNode.parentNodeId); // NEW: Add parent
+                    step.setBranchPath(new ArrayList<>(currentNode.branchPath));
+                    step.setParentNodeId(currentNode.parentNodeId);
                     
                     // Create detailed message with path
                     StringBuilder pathMessage = new StringBuilder();
@@ -224,6 +224,7 @@ public class SimplexBranchAndBound {
             }
             
             if (result.containsKey("variables")) {
+                @SuppressWarnings("unchecked")
                 Map<String, Double> variables = (Map<String, Double>) result.get("variables");
                 double objectiveValue = (Double) result.get("objective");
                 

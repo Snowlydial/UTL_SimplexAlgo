@@ -13,8 +13,8 @@ public class BranchAndBoundStep {
     private double rightChildBound;
     private Map<String, Double> solution;
     private String message;
-    private List<String> branchPath; // NEW: Track the path to this solution
-    private int parentNodeId; // NEW: Track parent node
+    private List<String> branchPath; // Track the path to this solution
+    private int parentNodeId; // Track parent node
 
     //?=====Constructors
     public BranchAndBoundStep() {}

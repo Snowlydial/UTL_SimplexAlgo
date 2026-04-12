@@ -6,7 +6,7 @@ public class SimplexRequest {
     private double[][] constraints; // the matrix
     private double[] rhs;
     private String[] constraintTypes; // the signs
-    private boolean integerProgramming; // NEW: flag to indicate if this is an integer programming problem
+    private boolean integerProgramming; // flag to indicate if this is an integer programming problem
 
     //?-------All getters
     public double[] getObjective() {

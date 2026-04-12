@@ -279,7 +279,7 @@ function buildBranchingStepHtml(step, stepNumber) {
                 <p><strong>Type:</strong> Integer Solution Found!</p>
                 <p><strong>Objective Value:</strong> ${(step.objectiveValue || 0).toFixed(4)}</p>
                 
-                <!-- NEW: Display branch path -->
+                <!-- Display branch path -->
                 ${step.branchPath && step.branchPath.length > 0 ? `
                 <div class="branch-path">
                     <p><strong> Branch Path to Solution:</strong></p>
