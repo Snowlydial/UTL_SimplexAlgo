@@ -84,56 +84,21 @@ Field notes:
 - constraintTypes: one of <=, >=, = for each constraint
 - integerProgramming: true to use Branch-and-Bound
 
-## Response format
+## Screenshots
 
-### LP response (Simplex or Two-Phase)
+### Classic
 
-```json
-{
-  "variables": {
-    "x1": 2.0,
-    "x2": 6.0
-  },
-  "objective": 36.0,
-  "steps": []
-}
-```
+![Screen 1](docs/screenshots/screen_1.png)
 
-For Two-Phase runs, step arrays are split:
+![Screen 2](docs/screenshots/screen_2.png)
 
-```json
-{
-  "variables": {
-    "x1": 2.0,
-    "x2": 6.0
-  },
-  "objective": 36.0,
-  "phase1Steps": [],
-  "phase2Steps": []
-}
-```
+![Screen 3](docs/screenshots/screen_3.png)
 
-### ILP response (Branch-and-Bound)
+### PLNE
 
-```json
-{
-  "variables": {
-    "x1": 2.0,
-    "x2": 5.0
-  },
-  "objective": 31.0,
-  "branchingSteps": [],
-  "solutionType": "INTEGER_OPTIMAL"
-}
-```
+![Screen 4](docs/screenshots/screen_4(PLNE).png)
 
-Error responses return:
-
-```json
-{
-  "error": "...message..."
-}
-```
+Edited the second constraint type from "<=" to "=>" to make the PLNE work.
 
 ## Project Structure
 
